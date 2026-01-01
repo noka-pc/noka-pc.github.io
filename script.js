@@ -346,25 +346,44 @@ document.addEventListener('DOMContentLoaded', function () {
     const loadingScreen = document.getElementById('loadingScreen');
 
     // Simple loading timer - wait 2 seconds then fade out
-    setTimeout(() => {
-        loadingScreen.classList.add('fade-out');
+    // Loading Screen Logic with Click-to-Enter for Autoplay
+    const clickToEnter = document.getElementById('clickToEnter');
+    const spinner = document.querySelector('.loader-spinner');
 
-        // Try to auto-play music
-        setTimeout(() => {
+    // Wait 2 seconds then show "Click to Enter"
+    setTimeout(() => {
+        spinner.style.display = 'none';
+        clickToEnter.style.display = 'block';
+
+        // Trigger reflow
+        void clickToEnter.offsetWidth;
+        clickToEnter.style.opacity = '1';
+
+        // Add one-time click listener to the entire screen
+        const enterHandler = () => {
+            loadingScreen.classList.add('fade-out');
+
+            // Play music
             const musicPlayer = window.musicPlayer;
             if (musicPlayer && musicPlayer.audio) {
-                musicPlayer.audio.play().catch(err => {
-                    console.log('Auto-play prevented by browser. User interaction required.');
+                musicPlayer.audio.play().then(() => {
+                    musicPlayer.isPlaying = true;
+                    musicPlayer.updateUI();
+                }).catch(err => {
+                    console.error('Audio play failed:', err);
                 });
-                musicPlayer.isPlaying = true;
-                musicPlayer.updateUI();
             }
-        }, 400);
 
-        // Remove loading screen from DOM
-        setTimeout(() => {
-            loadingScreen.style.display = 'none';
-        }, 1200);
+            // Remove loading screen
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 1200);
+
+            // Clean up listener
+            document.removeEventListener('click', enterHandler);
+        };
+
+        document.addEventListener('click', enterHandler);
     }, 2000);
 
     // Initialize Music Player
